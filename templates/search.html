@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<h1>Search Data</h1>
+<form method="POST" action="">
+    {{ form.hidden_tag() }}
+    <p>{{ form.search_term.label }} {{ form.search_term }}</p>
+    <p>{{ form.submit }}</p>
+</form>
+{% if items %}
+    <ul>
+    {% for item in items %}
+        <li>{{ item.name }} - {{ item.article_number }} - {{ item.quantity }} - {{ item.weight }} - <img src="{{ url_for('static', filename='uploads/' ~ item.photo) }}" width="100"></li>
+    {% endfor %}
+    </ul>
+{% endif %}
+{% endblock %}
