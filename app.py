@@ -1,12 +1,12 @@
 from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required
+from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 import base64
 from sqlalchemy.exc import IntegrityError
 from forms import LoginForm, SignupForm, AddDataForm, SearchForm
 from models import db, User, Item
-import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_secret_key')
@@ -14,6 +14,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:/
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
+migrate = Migrate(app, db)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
