@@ -7,6 +7,7 @@ import base64
 from sqlalchemy.exc import IntegrityError
 from forms import LoginForm, SignupForm, AddDataForm, SearchForm
 from models import db, User, Item
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_secret_key')
