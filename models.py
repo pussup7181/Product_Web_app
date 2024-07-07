@@ -1,11 +1,7 @@
-from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 
-app = Flask(__name__)
-app.config.from_object('config.Config')
-
-db = SQLAlchemy(app)
+db = SQLAlchemy()
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -13,9 +9,8 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(150), nullable=False)
 
 class Item(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    article_number = db.Column(db.String(100), primary_key=True, nullable=False)
     name = db.Column(db.String(150), nullable=False)
-    article_number = db.Column(db.String(100), unique=True, nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
+    size_in_inches = db.Column(db.Integer, nullable=False)
     weight = db.Column(db.Float, nullable=False)
-    photo = db.Column(db.String(300), nullable=True)
+    photo = db.Column(db.Text, nullable=True)  # To store base64-encoded image

@@ -1,17 +1,47 @@
 {% extends "base.html" %}
 {% block title %}Search{% endblock %}
 {% block content %}
-<h1>Search Data</h1>
-<form method="POST" action="">
-    {{ form.hidden_tag() }}
-    <p>{{ form.search_term.label }} {{ form.search_term }}</p>
-    <p>{{ form.submit }}</p>
-</form>
-{% if items %}
-    <ul>
-    {% for item in items %}
-        <li>{{ item.name }} - {{ item.article_number }} - {{ item.quantity }} - {{ item.weight }} - <img src="{{ url_for('static', filename='uploads/' ~ item.photo) }}" width="100"></li>
-    {% endfor %}
-    </ul>
-{% endif %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title text-center">Search Data</h1>
+                <form method="POST" action="">
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ form.search_term.label(class="form-label") }}
+                        {{ form.search_term(class="form-control") }}
+                    </div>
+                    <div class="form-group text-center">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+                {% if items %}
+                    <ul class="list-group mt-4">
+                        {% for item in items %}
+                            <li class="list-group-item">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <strong>{{ item.name }}</strong><br>
+                                        Article Number: {{ item.article_number }}<br>
+                                        Size: {{ item.size_in_inches }} inches<br>
+                                        Weight: {{ item.weight }} kg
+                                    </div>
+                                    <div class="col-md-4">
+                                        {% if item.photo %}
+                                            <img src="data:image/png;base64,{{ item.photo }}" class="img-fluid img-thumbnail">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <form method="POST" action="{{ url_for('delete_item', article_number=item.article_number) }}" class="mt-2">
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
