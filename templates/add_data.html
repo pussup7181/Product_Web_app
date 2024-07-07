@@ -1,14 +1,83 @@
 {% extends "base.html" %}
 {% block title %}Add Data{% endblock %}
 {% block content %}
-<h1>Add Data</h1>
-<form method="POST" enctype="multipart/form-data">
-    {{ form.hidden_tag() }}
-    <p>{{ form.name.label }} {{ form.name }}</p>
-    <p>{{ form.article_number.label }} {{ form.article_number }}</p>
-    <p>{{ form.quantity.label }} {{ form.quantity }}</p>
-    <p>{{ form.weight.label }} {{ form.weight }}</p>
-    <p>{{ form.photo.label }} {{ form.photo }}</p>
-    <p>{{ form.submit }}</p>
-</form>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title text-center">Add Data</h1>
+                <form id="add-data-form" method="POST" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ form.article_number.label(class="form-label") }}
+                        {{ form.article_number(class="form-control") }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.name.label(class="form-label") }}
+                        {{ form.name(class="form-control") }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.size_in_inches.label(class="form-label") }}
+                        {{ form.size_in_inches(class="form-control") }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.weight.label(class="form-label") }}
+                        {{ form.weight(class="form-control") }}
+                    </div>
+                    <div class="form-group">
+                        {{ form.photo.label(class="form-label") }}
+                        {{ form.photo(class="form-control-file") }}
+                    </div>
+                    <div class="form-group text-center">
+                        {{ form.submit_button(class="btn btn-primary") }}  <!-- Changed name here -->
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Article Number Exists -->
+<div class="modal fade" id="articleNumberExistsModal" tabindex="-1" role="dialog" aria-labelledby="articleNumberExistsModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="articleNumberExistsModalLabel">Article Number Exists</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        The article number you entered already exists. Please check the article number.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('add-data-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    var articleNumber = document.querySelector('input[name="article_number"]').value;
+    var form = event.target;
+    fetch('{{ url_for("check_article_number") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ form.csrf_token._value() }}'
+        },
+        body: JSON.stringify({ article_number: articleNumber })
+    }).then(response => response.json()).then(data => {
+        if (data.exists) {
+            $('#articleNumberExistsModal').modal('show');
+        } else {
+            form.submit();  // Correctly submit the form
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+    });
+});
+</script>
 {% endblock %}

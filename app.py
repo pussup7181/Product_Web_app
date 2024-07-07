@@ -1,16 +1,21 @@
-from flask import Flask, render_template, redirect, url_for, flash, request
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, current_user, logout_user, login_required
+from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
-import os
+import base64
+from sqlalchemy.exc import IntegrityError
 from forms import LoginForm, SignupForm, AddDataForm, SearchForm
 from models import db, User, Item
+import os
 
 app = Flask(__name__)
-app.config.from_object('config.Config')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your_secret_key')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///local.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
+migrate = Migrate(app, db)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -19,11 +24,6 @@ login_manager.login_view = 'login'
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
-def ensure_uploads_directory():
-    uploads_path = os.path.join(app.static_folder, 'uploads')
-    if not os.path.exists(uploads_path):
-        os.makedirs(uploads_path)
 
 @app.route('/')
 @login_required
@@ -68,33 +68,58 @@ def signup():
 def add_data():
     form = AddDataForm()
     if form.validate_on_submit():
-        photo = None
+        photo_base64 = None
         if form.photo.data:
-            ensure_uploads_directory()  # Ensure the uploads directory exists
-            photo_file = secure_filename(form.photo.data.filename)
-            form.photo.data.save(os.path.join(app.static_folder, 'uploads', photo_file))
-            photo = photo_file
-        new_item = Item(name=form.name.data, article_number=form.article_number.data,
-                        quantity=form.quantity.data, weight=form.weight.data, photo=photo)
-        db.session.add(new_item)
-        db.session.commit()
-        flash('Data Added Successfully!', 'success')
-        return redirect(url_for('home'))
+            photo_data = form.photo.data.read()
+            photo_base64 = base64.b64encode(photo_data).decode('utf-8')
+        new_item = Item(
+            article_number=form.article_number.data,
+            name=form.name.data,
+            size_in_inches=form.size_in_inches.data,
+            weight=form.weight.data,
+            photo=photo_base64
+        )
+        try:
+            db.session.add(new_item)
+            db.session.commit()
+            flash('Data Added Successfully!', 'success')
+        except IntegrityError:
+            db.session.rollback()
+            flash('Article number already exists. Please use a unique article number.', 'danger')
+        return redirect(url_for('add_data'))
     return render_template('add_data.html', form=form)
 
 @app.route('/search', methods=['GET', 'POST'])
 @login_required
 def search():
     form = SearchForm()
-    items = []
+    items = Item.query.all()  # Fetch all items initially
     if form.validate_on_submit():
         search_term = form.search_term.data
-        items = Item.query.filter(Item.name.contains(search_term)).all()
+        items = Item.query.filter(Item.article_number.contains(search_term)).all()
     return render_template('search.html', form=form, items=items)
+
+@app.route('/delete/<string:article_number>', methods=['POST'])
+@login_required
+def delete_item(article_number):
+    item = Item.query.filter_by(article_number=article_number).first()
+    if item:
+        db.session.delete(item)
+        db.session.commit()
+        flash('Item Deleted Successfully!', 'success')
+    else:
+        flash('Item not found!', 'danger')
+    return redirect(url_for('search'))
+
+@app.route('/api/check_article_number', methods=['POST'])
+@login_required
+def check_article_number():
+    data = request.get_json()
+    article_number = data.get('article_number')
+    exists = db.session.query(Item.article_number).filter_by(article_number=article_number).first() is not None
+    return jsonify({'exists': exists})
 
 if __name__ == '__main__':
     with app.app_context():
-        if not os.path.exists(os.path.join(app.instance_path, 'app.db')):
-            os.makedirs(os.path.join(app.instance_path), exist_ok=True)
-            db.create_all()
+        db.create_all()
     app.run(debug=True)

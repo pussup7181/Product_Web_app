@@ -21,12 +21,12 @@ class SignupForm(FlaskForm):
             raise ValidationError('That username is taken. Please choose a different one.')
 
 class AddDataForm(FlaskForm):
-    name = StringField('Name', validators=[DataRequired()])
     article_number = StringField('Article Number', validators=[DataRequired()])
-    quantity = IntegerField('Quantity', validators=[DataRequired()])
+    name = StringField('Name', validators=[DataRequired()])
+    size_in_inches = IntegerField('Size in Inches', validators=[DataRequired()])
     weight = FloatField('Weight', validators=[DataRequired()])
     photo = FileField('Photo', validators=[FileAllowed(['jpg', 'png', 'jpeg'])])
-    submit = SubmitField('Add Data')
+    submit_button = SubmitField('Add Data')  # Changed name here
 
 class SearchForm(FlaskForm):
     search_term = StringField('Search', validators=[DataRequired()])
