@@ -1,47 +1,73 @@
 {% extends "base.html" %}
 {% block title %}Search{% endblock %}
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <h1 class="card-title text-center">Search Data</h1>
-                <form method="POST" action="">
-                    {{ form.hidden_tag() }}
-                    <div class="form-group">
-                        {{ form.search_term.label(class="form-label") }}
-                        {{ form.search_term(class="form-control") }}
+<div class="container mt-5">
+    <h1 class="text-center">Search Items</h1>
+    <div class="row">
+        <div class="col-md-12">
+            <form method="GET" action="{{ url_for('search') }}">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" name="query" placeholder="Search by article number" value="{{ request.args.get('query', '') }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="submit">Search</button>
                     </div>
-                    <div class="form-group text-center">
-                        {{ form.submit(class="btn btn-primary") }}
-                    </div>
-                </form>
-                {% if items %}
-                    <ul class="list-group mt-4">
-                        {% for item in items %}
-                            <li class="list-group-item">
-                                <div class="row">
-                                    <div class="col-md-8">
-                                        <strong>{{ item.name }}</strong><br>
-                                        Article Number: {{ item.article_number }}<br>
-                                        Size: {{ item.size_in_inches }} inches<br>
-                                        Weight: {{ item.weight }} kg
-                                    </div>
-                                    <div class="col-md-4">
-                                        {% if item.photo %}
-                                            <img src="data:image/png;base64,{{ item.photo }}" class="img-fluid img-thumbnail">
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <form method="POST" action="{{ url_for('delete_item', article_number=item.article_number) }}" class="mt-2">
-                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                </form>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-            </div>
+                </div>
+            </form>
         </div>
     </div>
+    <div class="row">
+        {% for item in items %}
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <img src="data:image/jpeg;base64,{{ item.thumbnail }}" class="card-img-top thumbnail-image" alt="{{ item.name }}" data-toggle="modal" data-target="#imageModal" data-image="data:image/jpeg;base64,{{ item.photo }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ item.name }}</h5>
+                    <p class="card-text">Article Number: {{ item.article_number }}</p>
+                    <p class="card-text">Size (mm): {{ item.size_in_inches }}</p>
+                    <p class="card-text">Weight (g): {{ item.weight }}</p>
+                    <form method="POST" action="{{ url_for('delete_item', article_number=item.article_number) }}" class="delete-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
+
+<!-- Modal for displaying larger image -->
+<div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalLabel">Image</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <img src="" id="modalImage" class="img-fluid" alt="Larger Image">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    console.log("DOM fully loaded and parsed");
+
+    document.querySelectorAll('.thumbnail-image').forEach(function(image) {
+        image.addEventListener('click', function(event) {
+            var imageUrl = event.target.getAttribute('data-image');
+            var modalImage = document.getElementById('modalImage');
+            if (modalImage && imageUrl) {
+                modalImage.src = imageUrl; // Update the modal's content.
+            } else {
+                console.error("No image URL found or modalImage element not found");
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

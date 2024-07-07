@@ -1,42 +1,35 @@
 {% extends "base.html" %}
 {% block title %}Add Data{% endblock %}
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <h1 class="card-title text-center">Add Data</h1>
-                <form id="add-data-form" method="POST" enctype="multipart/form-data">
-                    {{ form.hidden_tag() }}
-                    <div class="form-group">
-                        {{ form.article_number.label(class="form-label") }}
-                        {{ form.article_number(class="form-control") }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.name.label(class="form-label") }}
-                        {{ form.name(class="form-control") }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.size_in_inches.label(class="form-label") }}
-                        {{ form.size_in_inches(class="form-control") }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.weight.label(class="form-label") }}
-                        {{ form.weight(class="form-control") }}
-                    </div>
-                    <div class="form-group">
-                        {{ form.photo.label(class="form-label") }}
-                        {{ form.photo(class="form-control-file") }}
-                    </div>
-                    <div class="form-group text-center">
-                        {{ form.submit_button(class="btn btn-primary") }}  <!-- Changed name here -->
-                    </div>
-                </form>
-            </div>
+<div class="container mt-5">
+    <h1 class="text-center">Add Item</h1>
+    <form id="add-data-form" method="POST" enctype="multipart/form-data" action="{{ url_for('add_data') }}">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            {{ form.article_number.label(class="form-control-label") }}
+            {{ form.article_number(class="form-control") }}
         </div>
-    </div>
+        <div class="form-group">
+            {{ form.name.label(class="form-control-label") }}
+            {{ form.name(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.size_in_inches.label(class="form-control-label") }}
+            {{ form.size_in_inches(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.weight.label(class="form-control-label") }}
+            {{ form.weight(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.photo.label(class="form-control-label") }}
+            {{ form.photo(class="form-control") }}
+        </div>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
 </div>
-
 <!-- Modal for Article Number Exists -->
 <div class="modal fade" id="articleNumberExistsModal" tabindex="-1" role="dialog" aria-labelledby="articleNumberExistsModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
