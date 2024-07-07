@@ -8,12 +8,16 @@ from sqlalchemy.exc import IntegrityError
 from flask_migrate import Migrate
 from forms import LoginForm, SignupForm, AddDataForm, SearchForm
 from models import db, User, Item
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret_key')
 
-# Update the database URL to handle Heroku's PostgreSQL URL
-db_url = os.environ.get('DATABASE_URL', 'sqlite:///instance/flaskr.sqlite')
+# Use PostgreSQL for local development and production
+db_url = os.environ.get('DATABASE_URL', 'postgresql://localhost/your_local_db_name')
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
