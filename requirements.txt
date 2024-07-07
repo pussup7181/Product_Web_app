@@ -12,4 +12,4 @@ MarkupSafe==2.0.1
 gunicorn==20.1.0
 psycopg2-binary==2.9.9
 Flask-Migrate==4.0.7
-doenv
+python-dotenv
