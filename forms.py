@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, DecimalField, IntegerField, FloatField, FileField
+from wtforms import StringField, PasswordField, SubmitField, IntegerField, FloatField, FileField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
 from flask_wtf.file import FileAllowed
 from models import User
@@ -23,10 +23,10 @@ class SignupForm(FlaskForm):
 class AddDataForm(FlaskForm):
     article_number = StringField('Article Number', validators=[DataRequired()])
     name = StringField('Name', validators=[DataRequired()])
-    size_in_inches = StringField('Size (mm)', validators=[DataRequired()])  # Changed to mm
-    weight = DecimalField('Weight (g)', validators=[DataRequired()])  # Changed to g
-    photo = FileField('Photo')
-    submit = SubmitField('Add Item')
+    size_in_inches = IntegerField('Size in Inches', validators=[DataRequired()])
+    weight = FloatField('Weight', validators=[DataRequired()])
+    photo = FileField('Photo', validators=[FileAllowed(['jpg', 'png', 'jpeg'])])
+    submit_button = SubmitField('Add Data')  # Changed name here
 
 class SearchForm(FlaskForm):
     search_term = StringField('Search', validators=[DataRequired()])

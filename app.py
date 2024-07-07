@@ -9,8 +9,6 @@ from flask_migrate import Migrate
 from forms import LoginForm, SignupForm, AddDataForm, SearchForm
 from models import db, User, Item
 from dotenv import load_dotenv
-from PIL import Image
-import io
 
 # Load environment variables from .env file
 load_dotenv()
@@ -19,7 +17,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret_key')
 
 # Use PostgreSQL for local development and production
-db_url = os.environ.get('DATABASE_URL', 'postgresql://localhost/postgres')
+db_url = os.environ.get('DATABASE_URL', 'postgresql://localhost/your_local_db_name')
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
@@ -78,51 +76,28 @@ def signup():
 @app.route('/add', methods=['GET', 'POST'])
 @login_required
 def add_data():
-    form = AddDataForm()  # Make sure this matches your form name
+    form = AddDataForm()
     if form.validate_on_submit():
-        # Check if the article number already exists
-        if Item.query.filter_by(article_number=form.article_number.data).first():
-            flash('Article number already exists. Please check the article number.', 'danger')
-            return redirect(url_for('add_data'))
-
-        # Process and save the image
+        photo_base64 = None
         if form.photo.data:
-            image_data = form.photo.data.read()
-            image = Image.open(io.BytesIO(image_data))
-
-            # Convert RGBA to RGB if necessary
-            if image.mode == 'RGBA':
-                image = image.convert('RGB')
-
-            # Save the original image
-            output = io.BytesIO()
-            image.save(output, format='JPEG', quality=85)
-            photo_data = base64.b64encode(output.getvalue()).decode('utf-8')
-
-            # Create a thumbnail
-            image.thumbnail((100, 100))
-            thumb_output = io.BytesIO()
-            image.save(thumb_output, format='JPEG', quality=85)
-            thumbnail_data = base64.b64encode(thumb_output.getvalue()).decode('utf-8')
-        else:
-            photo_data = None
-            thumbnail_data = None
-
-        # Create a new item
+            photo_data = form.photo.data.read()
+            photo_base64 = base64.b64encode(photo_data).decode('utf-8')
         new_item = Item(
             article_number=form.article_number.data,
             name=form.name.data,
             size_in_inches=form.size_in_inches.data,
             weight=form.weight.data,
-            photo=photo_data,
-            thumbnail=thumbnail_data
+            photo=photo_base64
         )
-        db.session.add(new_item)
-        db.session.commit()
-        flash('Item added successfully!', 'success')
+        try:
+            db.session.add(new_item)
+            db.session.commit()
+            flash('Data Added Successfully!', 'success')
+        except IntegrityError:
+            db.session.rollback()
+            flash('Article number already exists. Please use a unique article number.', 'danger')
         return redirect(url_for('add_data'))
     return render_template('add_data.html', form=form)
-
 
 @app.route('/search', methods=['GET', 'POST'])
 @login_required
@@ -157,5 +132,4 @@ def check_article_number():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(host='127.0.0.1', port=5000, debug=True)
-
+    app.run(debug=True)

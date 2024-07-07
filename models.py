@@ -9,10 +9,9 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(150), nullable=False)
 
 class Item(db.Model):
-    article_number = db.Column(db.String(100), primary_key=True)
-    name = db.Column(db.String(100))
-    size_in_inches = db.Column(db.Float)
-    weight = db.Column(db.Float)
-    photo = db.Column(db.Text)  # Base64 encoded original image
-    thumbnail = db.Column(db.Text)  # Base64 encoded compressed image
-
+    id = db.Column(db.Integer, primary_key=True)
+    article_number = db.Column(db.String(150), unique=True, nullable=False)
+    name = db.Column(db.String(150), nullable=False)
+    size_in_inches = db.Column(db.Integer, nullable=False)
+    weight = db.Column(db.Float, nullable=False)
+    photo = db.Column(db.Text, nullable=True)
