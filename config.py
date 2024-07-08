@@ -1,7 +1,6 @@
 import os
 
 class Config:
-    SECRET_KEY = os.urandom(24)
-    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:4561@localhost:5432/postgres'
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL') or 'sqlite:///local.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SECRET_KEY = os.getenv('SECRET_KEY') or 'your_secret_key'
