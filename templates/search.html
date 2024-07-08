@@ -24,12 +24,14 @@
                                     <div class="col-md-8">
                                         <strong>{{ item.name }}</strong><br>
                                         Article Number: {{ item.article_number }}<br>
-                                        Size: {{ item.size_in_inches }} inches<br>
-                                        Weight: {{ item.weight }} kg
+                                        Size: {{ item.size_in_mm }} mm<br>
+                                        Weight: {{ item.weight_in_g }} g
                                     </div>
                                     <div class="col-md-4">
-                                        {% if item.photo %}
-                                            <img src="data:image/png;base64,{{ item.photo }}" class="img-fluid img-thumbnail">
+                                        {% if item.thumbnail %}
+                                            <img data-src="data:image/png;base64,{{ item.thumbnail }}" 
+                                                 data-original="data:image/png;base64,{{ item.photo }}" 
+                                                 class="img-fluid img-thumbnail lazyload clickable-thumbnail">
                                         {% endif %}
                                     </div>
                                 </div>
@@ -44,4 +46,62 @@
         </div>
     </div>
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalLabel">High Resolution Image</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <img id="modalImage" src="" class="img-fluid modal-img" alt="High Resolution Image">
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.modal-dialog {
+    max-width: 90%;
+    width: 90%;
+}
+.modal-img {
+    width: 100%;
+    height: auto;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let lazyImages = [].slice.call(document.querySelectorAll("img.lazyload"));
+    if ("IntersectionObserver" in window) {
+        let lazyImageObserver = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    let lazyImage = entry.target;
+                    lazyImage.src = lazyImage.dataset.src;
+                    lazyImage.classList.remove("lazyload");
+                    lazyImageObserver.unobserve(lazyImage);
+                }
+            });
+        });
+        lazyImages.forEach(function(lazyImage) {
+            lazyImageObserver.observe(lazyImage);
+        });
+    }
+
+    // Event listener for clickable thumbnails
+    document.querySelectorAll(".clickable-thumbnail").forEach(function(thumbnail) {
+        thumbnail.addEventListener("click", function() {
+            let originalSrc = thumbnail.dataset.original;
+            document.getElementById("modalImage").src = originalSrc;
+            $('#imageModal').modal('show');
+        });
+    });
+});
+</script>
 {% endblock %}

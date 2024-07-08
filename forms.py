@@ -1,7 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, IntegerField, FloatField, FileField
+from wtforms import StringField, PasswordField, SubmitField, FloatField, FileField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
-from flask_wtf.file import FileAllowed
 from models import User
 
 class LoginForm(FlaskForm):
@@ -20,13 +19,13 @@ class SignupForm(FlaskForm):
         if user:
             raise ValidationError('That username is taken. Please choose a different one.')
 
-class AddDataForm(FlaskForm):
+class AddItemForm(FlaskForm):
     article_number = StringField('Article Number', validators=[DataRequired()])
     name = StringField('Name', validators=[DataRequired()])
-    size_in_inches = IntegerField('Size in Inches', validators=[DataRequired()])
-    weight = FloatField('Weight', validators=[DataRequired()])
-    photo = FileField('Photo', validators=[FileAllowed(['jpg', 'png', 'jpeg'])])
-    submit_button = SubmitField('Add Data')  # Changed name here
+    size_in_mm = FloatField('Size (mm)', validators=[DataRequired()])
+    weight_in_g = FloatField('Weight (g)', validators=[DataRequired()])
+    photo = FileField('Photo', validators=[DataRequired()])
+    submit_button = SubmitField('Add Item')
 
 class SearchForm(FlaskForm):
     search_term = StringField('Search', validators=[DataRequired()])

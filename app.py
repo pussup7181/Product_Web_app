@@ -6,23 +6,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import base64
 from sqlalchemy.exc import IntegrityError
 from flask_migrate import Migrate
-from forms import LoginForm, SignupForm, AddDataForm, SearchForm
-from models import db, User, Item
+from forms import LoginForm, SignupForm, AddItemForm, SearchForm
+from models import db, User, Item, generate_thumbnail
 from dotenv import load_dotenv
+from PIL import UnidentifiedImageError
 
 # Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'default_secret_key')
-
-# Use PostgreSQL for local development and production
-db_url = os.environ.get('DATABASE_URL', 'postgresql://localhost/your_local_db_name')
-if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config.from_object('config.Config')
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -73,41 +66,72 @@ def signup():
         return redirect(url_for('login'))
     return render_template('signup.html', form=form)
 
-@app.route('/add', methods=['GET', 'POST'])
-@login_required
-def add_data():
-    form = AddDataForm()
-    if form.validate_on_submit():
-        photo_base64 = None
-        if form.photo.data:
-            photo_data = form.photo.data.read()
-            photo_base64 = base64.b64encode(photo_data).decode('utf-8')
-        new_item = Item(
-            article_number=form.article_number.data,
-            name=form.name.data,
-            size_in_inches=form.size_in_inches.data,
-            weight=form.weight.data,
-            photo=photo_base64
-        )
-        try:
-            db.session.add(new_item)
-            db.session.commit()
-            flash('Data Added Successfully!', 'success')
-        except IntegrityError:
-            db.session.rollback()
-            flash('Article number already exists. Please use a unique article number.', 'danger')
-        return redirect(url_for('add_data'))
-    return render_template('add_data.html', form=form)
-
 @app.route('/search', methods=['GET', 'POST'])
-@login_required
 def search():
     form = SearchForm()
-    items = Item.query.all()  # Fetch all items initially
+    items = []
     if form.validate_on_submit():
         search_term = form.search_term.data
-        items = Item.query.filter(Item.article_number.contains(search_term)).all()
-    return render_template('search.html', form=form, items=items)
+        items = Item.query.filter(Item.name.ilike(f"%{search_term}%")).all()
+    else:
+        items = Item.query.all()  # Fetch all items initially
+
+    items_with_base64_images = [
+        {
+            'id': item.id,
+            'article_number': item.article_number,
+            'name': item.name,
+            'size_in_mm': item.size_in_mm,
+            'weight_in_g': item.weight_in_g,
+            'photo': base64.b64encode(item.photo).decode('utf-8') if item.photo else None,
+            'thumbnail': base64.b64encode(item.thumbnail).decode('utf-8') if item.thumbnail else None
+        }
+        for item in items
+    ]
+
+    return render_template('search.html', form=form, items=items_with_base64_images)
+
+
+@app.route('/add', methods=['GET', 'POST'])
+def add_data():
+    form = AddItemForm()
+    if form.validate_on_submit():
+        article_number = form.article_number.data
+        name = form.name.data
+        size_in_mm = form.size_in_mm.data
+        weight_in_g = form.weight_in_g.data
+        photo = form.photo.data.read()
+
+        # Check if the article number already exists
+        if Item.query.filter_by(article_number=article_number).first():
+            flash('Article number already exists. Please use a different article number.', 'danger')
+            return render_template('add_data.html', form=form)
+
+        # Generate thumbnail
+        try:
+            thumbnail = generate_thumbnail(photo)
+        except UnidentifiedImageError:
+            flash('Invalid image format. Please upload a valid image.', 'danger')
+            return render_template('add_data.html', form=form)
+
+        new_item = Item(
+            article_number=article_number,
+            name=name,
+            size_in_mm=size_in_mm,
+            weight_in_g=weight_in_g,
+            photo=photo,
+            thumbnail=thumbnail
+        )
+        db.session.add(new_item)
+        try:
+            db.session.commit()
+            flash('Item added successfully!', 'success')
+        except IntegrityError:
+            db.session.rollback()
+            flash('Article number already exists. Please use a different article number.', 'danger')
+        return redirect(url_for('add_data'))  # Stay on the same page
+    return render_template('add_data.html', form=form)
+
 
 @app.route('/delete/<string:article_number>', methods=['POST'])
 @login_required
