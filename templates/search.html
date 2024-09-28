@@ -30,7 +30,7 @@
                                     <div class="col-md-4">
                                         {% if item.thumbnail %}
                                             <!-- Add the onclick event to make the image clickable -->
-                                            <img src="data:image/png;base64,{{ item.thumbnail }}" class="img-fluid img-thumbnail lazyload" alt="{{ item.name }}" onclick="openModal({{ loop.index0 }})" style="cursor: pointer;">
+                                            <img src="data:image/webp;base64,{{ item.thumbnail }}" class="img-fluid img-thumbnail lazyload" loading="lazy" alt="{{ item.name }}" style="cursor: pointer;" onclick="openModal({{ loop.index0 }})">
                                         {% endif %}
                                     </div>
                                 </div>

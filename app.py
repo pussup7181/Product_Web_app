@@ -38,11 +38,11 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 @app.route('/')
+@app.route('/')
 def home():
-    # Fetch all items from the database
-    items = Item.query.all()
+    page = request.args.get('page', 1, type=int)
+    items = Item.query.paginate(page, 20, False).items
 
-    # Prepare items for rendering with base64 images
     items_with_base64_images = [
         {
             'id': item.id,
@@ -56,7 +56,8 @@ def home():
         for item in items
     ]
 
-    return render_template('home.html', items=items_with_base64_images)
+    return render_template('home.html', items=items_with_base64_images, page=page)
+
 @app.context_processor
 def inject_logout_form():
     return dict(logout_form=LogoutForm())
@@ -103,15 +104,21 @@ def signup():
 @login_required
 def search():
     form = SearchForm()
-    delete_form = DeleteForm()  # Create an instance of DeleteForm
+    delete_form = DeleteForm()
+    page = request.args.get('page', 1, type=int)  # Get the current page number from the query parameters
     items = []
 
     if form.validate_on_submit():
         search_term = form.search_term.data
-        items = Item.query.filter(Item.name.ilike(f"%{search_term}%")).all()
+        # Paginate the search results, limit to 20 items per page
+        pagination = Item.query.filter(Item.name.ilike(f"%{search_term}%")).paginate(page, 20, False)
     else:
-        items = Item.query.all()  # Fetch all items initially
+        # Paginate all items, limit to 20 items per page
+        pagination = Item.query.paginate(page, 20, False)
 
+    items = pagination.items  # Extract items from pagination object
+
+    # Convert images to base64 and handle lazy loading and webp format
     items_with_base64_images = [
         {
             'id': item.id,
@@ -126,12 +133,14 @@ def search():
     ]
 
     logout_form = LogoutForm()
+
     return render_template(
         'search.html',
         form=form,
         items=items_with_base64_images,
         logout_form=logout_form,
-        delete_form=delete_form  # Pass delete_form to the template
+        delete_form=delete_form,  # Pass delete_form to the template
+        pagination=pagination  # Pass pagination object to the template for page navigation
     )
 
 

@@ -6,7 +6,7 @@ from wtforms.validators import (
     DataRequired, Length, EqualTo, ValidationError
 )
 from flask_wtf.file import FileAllowed, FileRequired
-from models import User
+from models import User, save_image
 
 class LoginForm(FlaskForm):
     username = StringField(
@@ -44,6 +44,10 @@ class AddItemForm(FlaskForm):
         FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Only image files are allowed!')
     ])
     submit_button = SubmitField('Add Item')
+    def validate_image(self, field):
+        photo_file = field.data.read()
+        resized_image = save_image(photo_file)
+        field.data = resized_image  # Save the resized webp image back to the form
 
 class SearchForm(FlaskForm):
     search_term = StringField('Search', validators=[DataRequired()])

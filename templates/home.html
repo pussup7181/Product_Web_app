@@ -10,8 +10,7 @@
                     <div class="col-md-4 mb-4">
                         <div class="card">
                             {% if item.thumbnail %}
-                                <!-- Add the onclick event to make the image clickable -->
-                                <img src="data:image/png;base64,{{ item.thumbnail }}" class="card-img-top img-fluid lazyload" alt="{{ item.name }}" onclick="openModal({{ loop.index0 }})" style="cursor: pointer;">
+                                <img src="data:image/webp;base64,{{ item.thumbnail }}" class="card-img-top img-fluid lazyload" alt="{{ item.name }}" loading="lazy" onclick="openModal({{ loop.index0 }})" style="cursor: pointer;">
                             {% endif %}
                             <div class="card-body">
                                 <h5 class="card-title">{{ item.name }}</h5>
@@ -25,11 +24,23 @@
                     </div>
                 {% endfor %}
             </div>
+            <!-- Pagination controls -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if page > 1 %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('home', page=page-1) }}">Previous</a></li>
+                    {% endif %}
+                    {% if items|length == 20 %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('home', page=page+1) }}">Next</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
         {% else %}
             <p class="mt-4">No items available.</p>
         {% endif %}
     </div>
 </div>
+
 
 <!-- Modal Structure -->
 <div class="modal" id="itemModal" tabindex="-1" role="dialog">
