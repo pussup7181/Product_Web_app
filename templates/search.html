@@ -29,7 +29,8 @@
                                     </div>
                                     <div class="col-md-4">
                                         {% if item.thumbnail %}
-                                            <img src="data:image/png;base64,{{ item.thumbnail }}" class="img-fluid img-thumbnail lazyload">
+                                            <!-- Add the onclick event to make the image clickable -->
+                                            <img src="data:image/png;base64,{{ item.thumbnail }}" class="img-fluid img-thumbnail lazyload" alt="{{ item.name }}" onclick="openModal({{ loop.index0 }})" style="cursor: pointer;">
                                         {% endif %}
                                     </div>
                                 </div>
@@ -45,4 +46,82 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Structure -->
+<div class="modal" id="itemModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <img id="modalImage" src="" class="img-fluid mb-3" alt="Item Image">
+                <p><strong>Article Number:</strong> <span id="modalArticleNumber"></span></p>
+                <p><strong>Size:</strong> <span id="modalSize"></span> mm</p>
+                <p><strong>Weight:</strong> <span id="modalWeight"></span> g</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="prevBtn" onclick="showPreviousItem()">Previous</button>
+                <button type="button" class="btn btn-secondary" id="nextBtn" onclick="showNextItem()">Next</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var items = {{ items|tojson }};
+    var currentIndex = 0;
+
+    function openModal(index) {
+        currentIndex = index;
+        const item = items[currentIndex];
+
+        // Set modal details
+        document.getElementById('modalTitle').textContent = item.name;
+        document.getElementById('modalImage').src = `data:image/png;base64,${item.photo}`;
+        document.getElementById('modalArticleNumber').textContent = item.article_number;
+        document.getElementById('modalSize').textContent = item.size_in_mm;
+        document.getElementById('modalWeight').textContent = item.weight_in_g;
+
+        // Handle next/prev button visibility
+        updateNavButtons();
+
+        // Show modal
+        $('#itemModal').modal('show');
+    }
+
+    function updateNavButtons() {
+        // Enable/Disable prev button
+        if (currentIndex > 0) {
+            document.getElementById('prevBtn').disabled = false;
+        } else {
+            document.getElementById('prevBtn').disabled = true;
+        }
+
+        // Enable/Disable next button
+        if (currentIndex < items.length - 1) {
+            document.getElementById('nextBtn').disabled = false;
+        } else {
+            document.getElementById('nextBtn').disabled = true;
+        }
+    }
+
+    function showNextItem() {
+        if (currentIndex < items.length - 1) {
+            currentIndex++;
+            openModal(currentIndex);
+        }
+    }
+
+    function showPreviousItem() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            openModal(currentIndex);
+        }
+    }
+</script>
 {% endblock %}
