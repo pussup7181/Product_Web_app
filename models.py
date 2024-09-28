@@ -23,6 +23,21 @@ class Item(db.Model):
 
     def __repr__(self):
         return f"<Item {self.name}>"
+    
+def save_image(photo_file):
+    image = Image.open(io.BytesIO(photo_file))
+    
+    # Resize image to maintain aspect ratio
+    max_width = 800
+    if image.width > max_width:
+        ratio = max_width / image.width
+        new_height = int(image.height * ratio)
+        image = image.resize((max_width, new_height))
+
+    # Convert to webp format
+    webp_io = io.BytesIO()
+    image.save(webp_io, format='WEBP', quality=85)
+    return webp_io.getvalue()
 
 def generate_thumbnail(image_data):
     if not image_data:
