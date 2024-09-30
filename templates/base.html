@@ -8,7 +8,7 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="{{ url_for('home') }}"><img src="{{ url_for('static', filename='images/Logo.png') }}" alt="Logo" style="height: 150px;"></a>
+        <a class="navbar-brand" href="{{ url_for('home') }}"><img src="{{ url_for('static', filename='images/Logo.png') }}" alt="Logo" class="logo"></a>
         <button class="navbar-toggler" type="button" data-toggle="collapse"
                 data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
                 aria-label="Toggle navigation">
@@ -48,6 +48,19 @@
         {% endwith %}
         {% block content %}{% endblock %}
     </div>
+    <style>
+        /* By default, set the height to 150px for larger screens */
+        .logo {
+            height: 150px;
+        }
+    
+        /* For phones or small screens, set the height to 50px */
+        @media only screen and (max-width: 768px) {
+            .logo {
+                height: 100px;
+            }
+        }
+    </style>
     <!-- Include JS scripts -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>

@@ -44,7 +44,7 @@ def generate_thumbnail(image_data):
     if not image_data:
         raise UnidentifiedImageError("No image data provided.")
     image = Image.open(io.BytesIO(image_data))
-    image.thumbnail((100, 100))  # Set the thumbnail size
+    image.thumbnail((200, 200))  # Set the thumbnail size
     thumb_io = io.BytesIO()
     image.save(thumb_io, format='PNG')
     return thumb_io.getvalue()

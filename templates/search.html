@@ -14,6 +14,7 @@
                     </div>
                     <div class="form-group text-center">
                         {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('search') }}" class="btn btn-secondary">Clear Search</a>
                     </div>
                 </form>
                 {% if items %}

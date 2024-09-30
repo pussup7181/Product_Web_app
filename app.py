@@ -8,6 +8,8 @@ from flask_login import (
 from werkzeug.security import generate_password_hash, check_password_hash
 import base64
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_, cast
+from sqlalchemy.types import String
 from flask_migrate import Migrate
 from forms import LoginForm, SignupForm, AddItemForm, SearchForm, LogoutForm, DeleteForm
 from models import db, User, Item, generate_thumbnail
@@ -174,13 +176,22 @@ def search():
 
     if form.validate_on_submit():
         search_term = form.search_term.data
-        # Include photo in the selected fields
-        pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail, Item.photo).filter(Item.name.ilike(f"%{search_term}%")).paginate(page, 20, False)
+
+        # Create search criteria for multiple fields, casting numeric fields to string for matching
+        search_criteria = or_(
+            Item.name.ilike(f"%{search_term}%"),
+            Item.article_number.ilike(f"%{search_term}%"),
+            cast(Item.size_in_mm, String).ilike(f"%{search_term}%"),  # Cast numeric field to string for ILIKE
+            cast(Item.weight_in_g, String).ilike(f"%{search_term}%")  # Cast numeric field to string for ILIKE
+        )
+
+        # Perform search with search criteria
+        pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail).filter(search_criteria).paginate(page, 20, False)
     else:
-        pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail, Item.photo).paginate(page, 20, False)
+        # Display all items if no search term is provided
+        pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail).paginate(page, 20, False)
 
     items = pagination.items
-    # Prepare base64-encoded images and send to the template
     items_with_base64_images = [
         {
             'id': item.id,
@@ -188,7 +199,6 @@ def search():
             'name': item.name,
             'size_in_mm': item.size_in_mm,
             'weight_in_g': item.weight_in_g,
-            'photo': base64.b64encode(item.photo).decode('utf-8') if item.photo else None,
             'thumbnail': base64.b64encode(item.thumbnail).decode('utf-8') if item.thumbnail else None
         }
         for item in items
@@ -201,7 +211,6 @@ def search():
         delete_form=delete_form,
         pagination=pagination
     )
-
 
 
 @app.route('/add', methods=['GET', 'POST'])
