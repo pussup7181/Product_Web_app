@@ -14,10 +14,7 @@ from models import db, User, Item, generate_thumbnail
 from dotenv import load_dotenv
 from PIL import UnidentifiedImageError
 from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.pdfgen import canvas
 
 # Load environment variables from .env file
 load_dotenv()
@@ -42,61 +39,63 @@ app.config.update(
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-# Route for PDF generation
 @app.route('/generate_pdf')
-@login_required
 def generate_pdf():
-    items = Item.query.all()  # Fetch all items from the database
-
+    # Create a bytes buffer for the PDF data
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
 
-    elements = []
-    styles = getSampleStyleSheet()
-    data = []
+    # Create a new PDF canvas
+    c = canvas.Canvas(buffer, pagesize=A4)
 
-    # Define the header for the table
-    header = ['Image', 'Details']
-    data.append(header)
+    # Add logo image to the PDF (adjust the path as needed)
+    logo_path = os.path.join(app.root_path, 'static/images/Logo.png')
+    if os.path.exists(logo_path):
+        c.drawImage(logo_path, 40, 750, width=100, height=50)  # Position the image on the page
+    else:
+        c.drawString(40, 750, "Logo not found")  # If logo is not found, show a message
 
-    # Loop through each item and add to the table data
-    for item in items:
-        # Convert the photo back to high-quality for the PDF
+    # Set the title for the PDF
+    c.setFont("Helvetica", 16)
+    c.drawString(40, 700, "Catalog of Items")
+
+    # Get items from the database (for demo purposes, replace with your data fetching logic)
+    items = Item.query.all()
+
+    # Set the y position for the first item
+    y_position = 650
+
+    # Loop through the items and add them to the PDF
+    for index, item in enumerate(items, start=1):
+        if y_position < 100:  # Create a new page if we're running out of space
+            c.showPage()
+            y_position = 750
+
+        # Add the item image if available (in high quality)
         if item.photo:
-            img = Image(BytesIO(item.photo), width=2*inch, height=2*inch)
-        else:
-            img = "No Image Available"
+            item_img_path = os.path.join(app.root_path, 'static/images/', f"item_{item.id}.png")
+            with open(item_img_path, 'wb') as img_file:
+                img_file.write(item.photo)  # Save the image file temporarily
+            c.drawImage(item_img_path, 40, y_position - 50, width=80, height=80)
+            os.remove(item_img_path)  # Delete the temp image after it's added to the PDF
 
-        # Add item details as a string
-        details = f"Name: {item.name}\nArticle Number: {item.article_number}\nSize: {item.size_in_mm} mm\nWeight: {item.weight_in_g} g"
-        
-        # Append image and details to the data
-        data.append([img, details])
+        # Add the item details in a table-like format
+        c.setFont("Helvetica", 12)
+        c.drawString(150, y_position, f"Item: {item.name}")
+        c.drawString(150, y_position - 15, f"Article Number: {item.article_number}")
+        c.drawString(150, y_position - 30, f"Size: {item.size_in_mm} mm")
+        c.drawString(150, y_position - 45, f"Weight: {item.weight_in_g} g")
 
-    # Create the table with the data
-    table = Table(data, colWidths=[2.5 * inch, 4 * inch])
+        # Move y_position up for the next item
+        y_position -= 100
 
-    # Style the table
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-    ]))
+    # Save the PDF
+    c.save()
 
-    elements.append(table)
-    
-    # Build the PDF
-    doc.build(elements)
-    
+    # Move the buffer position to the beginning
     buffer.seek(0)
-    
-    # Send the PDF as response
-    return send_file(buffer, as_attachment=True, download_name='items_catalog.pdf', mimetype='application/pdf')
+
+    # Return the PDF as a response
+    return send_file(buffer, as_attachment=True, download_name="catalog.pdf", mimetype='application/pdf')
 @app.route('/')
 @app.route('/home')
 def home():
