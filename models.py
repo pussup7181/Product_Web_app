@@ -32,12 +32,13 @@ def save_image(photo_file):
     if image.width > max_width:
         ratio = max_width / image.width
         new_height = int(image.height * ratio)
-        image = image.resize((max_width, new_height))
+        image = image.resize((max_width, new_height), Image.ANTIALIAS)
 
     # Convert to webp format
     webp_io = io.BytesIO()
-    image.save(webp_io, format='WEBP', quality=85)
+    image.save(webp_io, format='WEBP', quality=80)  # Lowered quality to 80 for better compression
     return webp_io.getvalue()
+
 
 def generate_thumbnail(image_data):
     if not image_data:

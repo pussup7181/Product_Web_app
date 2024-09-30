@@ -38,10 +38,15 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 @app.route('/')
-@app.route('/')
+@app.route('/home')
 def home():
     page = request.args.get('page', 1, type=int)
-    items = Item.query.paginate(page, 20, False).items
+    
+    # Use paginate to get the pagination object
+    pagination = Item.query.paginate(page, 20, False)
+    
+    # Extract the items from the pagination object
+    items = pagination.items
 
     items_with_base64_images = [
         {
@@ -56,7 +61,8 @@ def home():
         for item in items
     ]
 
-    return render_template('home.html', items=items_with_base64_images, page=page)
+    # Pass the pagination object to the template as well
+    return render_template('home.html', items=items_with_base64_images, pagination=pagination)
 
 @app.context_processor
 def inject_logout_form():
@@ -105,20 +111,17 @@ def signup():
 def search():
     form = SearchForm()
     delete_form = DeleteForm()
-    page = request.args.get('page', 1, type=int)  # Get the current page number from the query parameters
-    items = []
+    page = request.args.get('page', 1, type=int)
 
     if form.validate_on_submit():
         search_term = form.search_term.data
-        # Paginate the search results, limit to 20 items per page
-        pagination = Item.query.filter(Item.name.ilike(f"%{search_term}%")).paginate(page, 20, False)
+        # Include photo in the selected fields
+        pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail, Item.photo).filter(Item.name.ilike(f"%{search_term}%")).paginate(page, 20, False)
     else:
-        # Paginate all items, limit to 20 items per page
-        pagination = Item.query.paginate(page, 20, False)
+        pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail, Item.photo).paginate(page, 20, False)
 
-    items = pagination.items  # Extract items from pagination object
-
-    # Convert images to base64 and handle lazy loading and webp format
+    items = pagination.items
+    # Prepare base64-encoded images and send to the template
     items_with_base64_images = [
         {
             'id': item.id,
@@ -132,16 +135,14 @@ def search():
         for item in items
     ]
 
-    logout_form = LogoutForm()
-
     return render_template(
         'search.html',
         form=form,
         items=items_with_base64_images,
-        logout_form=logout_form,
-        delete_form=delete_form,  # Pass delete_form to the template
-        pagination=pagination  # Pass pagination object to the template for page navigation
+        delete_form=delete_form,
+        pagination=pagination
     )
+
 
 
 @app.route('/add', methods=['GET', 'POST'])

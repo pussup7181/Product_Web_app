@@ -30,10 +30,17 @@
                                     <div class="col-md-4">
                                         {% if item.thumbnail %}
                                             <!-- Add the onclick event to make the image clickable -->
-                                            <img src="data:image/webp;base64,{{ item.thumbnail }}" class="img-fluid img-thumbnail lazyload" loading="lazy" alt="{{ item.name }}" style="cursor: pointer;" onclick="openModal({{ loop.index0 }})">
+                                            <img src="data:image/webp;base64,{{ item.thumbnail }}" 
+                                                 class="img-fluid img-thumbnail lazyload" 
+                                                 loading="lazy" 
+                                                 alt="{{ item.name }}" 
+                                                 style="cursor: pointer;" 
+                                                 onclick="openModal({{ loop.index0 }})"
+                                                 async>
                                         {% endif %}
                                     </div>
                                 </div>
+                                
                                 <form method="POST" action="{{ url_for('delete_item', article_number=item.article_number) }}" class="mt-2">
                                     {{ delete_form.hidden_tag() }}
                                     {{ delete_form.submit(class="btn btn-danger btn-sm") }}
@@ -41,6 +48,30 @@
                             </li>
                         {% endfor %}
                     </ul>
+                    <!-- Pagination block outside the loop -->
+                    <!-- Pagination block in search.html -->
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        {% if pagination.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('search', page=pagination.prev_num) }}">Previous</a>
+            </li>
+        {% endif %}
+        {% for page_num in pagination.iter_pages() %}
+            {% if page_num %}
+                <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('search', page=page_num) }}">{{ page_num }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('search', page=pagination.next_num) }}">Next</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+
                 {% endif %}
             </div>
         </div>
@@ -82,7 +113,13 @@
 
         // Set modal details
         document.getElementById('modalTitle').textContent = item.name;
-        document.getElementById('modalImage').src = `data:image/png;base64,${item.photo}`;
+        // Check if photo is available and in WebP format, adjust the base64 format as needed
+        if (item.photo) {
+            document.getElementById('modalImage').src = `data:image/webp;base64,${item.photo}`;
+        } else {
+            document.getElementById('modalImage').src = '';  // No image found, clear src
+        }
+
         document.getElementById('modalArticleNumber').textContent = item.article_number;
         document.getElementById('modalSize').textContent = item.size_in_mm;
         document.getElementById('modalWeight').textContent = item.weight_in_g;
@@ -96,18 +133,9 @@
 
     function updateNavButtons() {
         // Enable/Disable prev button
-        if (currentIndex > 0) {
-            document.getElementById('prevBtn').disabled = false;
-        } else {
-            document.getElementById('prevBtn').disabled = true;
-        }
-
+        document.getElementById('prevBtn').disabled = currentIndex <= 0;
         // Enable/Disable next button
-        if (currentIndex < items.length - 1) {
-            document.getElementById('nextBtn').disabled = false;
-        } else {
-            document.getElementById('nextBtn').disabled = true;
-        }
+        document.getElementById('nextBtn').disabled = currentIndex >= items.length - 1;
     }
 
     function showNextItem() {
@@ -124,4 +152,5 @@
         }
     }
 </script>
+
 {% endblock %}
