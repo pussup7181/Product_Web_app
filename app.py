@@ -167,6 +167,7 @@ def signup():
         return redirect(url_for('login'))
     return render_template('signup.html', form=form)
 
+
 @app.route('/search', methods=['GET', 'POST'])
 @login_required
 def search():
@@ -184,13 +185,15 @@ def search():
             cast(Item.size_in_mm, String).ilike(f"%{search_term}%"),  # Cast numeric field to string for ILIKE
             cast(Item.weight_in_g, String).ilike(f"%{search_term}%")  # Cast numeric field to string for ILIKE
         )
-        
-        # Include photo in the selected fields
+
+        # Perform search with search criteria and include the 'photo' field in the query
         pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail, Item.photo).filter(search_criteria).paginate(page, 20, False)
     else:
+        # Display all items if no search term is provided
         pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail, Item.photo).paginate(page, 20, False)
 
     items = pagination.items
+
     # Prepare base64-encoded images and send to the template
     items_with_base64_images = [
         {
@@ -199,7 +202,7 @@ def search():
             'name': item.name,
             'size_in_mm': item.size_in_mm,
             'weight_in_g': item.weight_in_g,
-            'photo': base64.b64encode(item.photo).decode('utf-8') if item.photo else None,
+            'photo': base64.b64encode(item.photo).decode('utf-8') if item.photo else None,  # Add the full photo
             'thumbnail': base64.b64encode(item.thumbnail).decode('utf-8') if item.thumbnail else None
         }
         for item in items
@@ -212,6 +215,7 @@ def search():
         delete_form=delete_form,
         pagination=pagination
     )
+
 
 
 
