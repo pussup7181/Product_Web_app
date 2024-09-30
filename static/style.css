@@ -10,3 +10,69 @@ nav ul li {
     display: inline;
     margin-right: 10px;
 }
+
+        /* By default, set the height to 150px for larger screens */
+        .logo {
+            height: 150px;
+        }
+    
+        /* For phones or small screens, set the height to 50px */
+        @media only screen and (max-width: 768px) {
+            .logo {
+                height: 100px;
+            }
+        }
+    .modal-dialog {
+        max-width: 100%;
+        margin: 0;
+    }
+
+    .modal-content {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-header {
+        flex: 0 1 auto;
+    }
+
+    .modal-body {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .modal-footer {
+        flex: 0 1 auto;
+    }
+
+    .modal-image-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    #modalImage {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    /* Make sure modal covers the full screen height and doesn't overflow */
+    .modal-content {
+        border-radius: 0;
+    }
+
+    .modal-body {
+        padding: 10px;
+        text-align: center;
+    }
+

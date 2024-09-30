@@ -108,53 +108,7 @@
 
 
 <script>
-    var items = {{ items|tojson }};
-    var currentIndex = 0;
-
-    function openModal(index) {
-        currentIndex = index;
-        const item = items[currentIndex];
-
-        // Set modal details
-        document.getElementById('modalTitle').textContent = item.name;
-        // Check if photo is available and in WebP format, adjust the base64 format as needed
-        if (item.photo) {
-            document.getElementById('modalImage').src = `data:image/webp;base64,${item.photo}`;
-        } else {
-            document.getElementById('modalImage').src = '';  // No image found, clear src
-        }
-
-        document.getElementById('modalArticleNumber').textContent = item.article_number;
-        document.getElementById('modalSize').textContent = item.size_in_mm;
-        document.getElementById('modalWeight').textContent = item.weight_in_g;
-
-        // Handle next/prev button visibility
-        updateNavButtons();
-
-        // Show modal
-        $('#itemModal').modal('show');
-    }
-
-    function updateNavButtons() {
-        // Enable/Disable prev button
-        document.getElementById('prevBtn').disabled = currentIndex <= 0;
-        // Enable/Disable next button
-        document.getElementById('nextBtn').disabled = currentIndex >= items.length - 1;
-    }
-
-    function showNextItem() {
-        if (currentIndex < items.length - 1) {
-            currentIndex++;
-            openModal(currentIndex);
-        }
-    }
-
-    function showPreviousItem() {
-        if (currentIndex > 0) {
-            currentIndex--;
-            openModal(currentIndex);
-        }
-    }
+    
 </script>
 
 {% endblock %}
