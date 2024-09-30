@@ -1,5 +1,6 @@
 import os
-from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
+from io import BytesIO
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import (
     LoginManager, login_user, current_user, logout_user, login_required
@@ -12,6 +13,11 @@ from forms import LoginForm, SignupForm, AddItemForm, SearchForm, LogoutForm, De
 from models import db, User, Item, generate_thumbnail
 from dotenv import load_dotenv
 from PIL import UnidentifiedImageError
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image
+from reportlab.lib.styles import getSampleStyleSheet
 
 # Load environment variables from .env file
 load_dotenv()
@@ -36,7 +42,61 @@ app.config.update(
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+# Route for PDF generation
+@app.route('/generate_pdf')
+@login_required
+def generate_pdf():
+    items = Item.query.all()  # Fetch all items from the database
 
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+
+    elements = []
+    styles = getSampleStyleSheet()
+    data = []
+
+    # Define the header for the table
+    header = ['Image', 'Details']
+    data.append(header)
+
+    # Loop through each item and add to the table data
+    for item in items:
+        # Convert the photo back to high-quality for the PDF
+        if item.photo:
+            img = Image(BytesIO(item.photo), width=2*inch, height=2*inch)
+        else:
+            img = "No Image Available"
+
+        # Add item details as a string
+        details = f"Name: {item.name}\nArticle Number: {item.article_number}\nSize: {item.size_in_mm} mm\nWeight: {item.weight_in_g} g"
+        
+        # Append image and details to the data
+        data.append([img, details])
+
+    # Create the table with the data
+    table = Table(data, colWidths=[2.5 * inch, 4 * inch])
+
+    # Style the table
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+
+    elements.append(table)
+    
+    # Build the PDF
+    doc.build(elements)
+    
+    buffer.seek(0)
+    
+    # Send the PDF as response
+    return send_file(buffer, as_attachment=True, download_name='items_catalog.pdf', mimetype='application/pdf')
 @app.route('/')
 @app.route('/home')
 def home():
