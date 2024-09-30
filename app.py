@@ -3,6 +3,7 @@ import io
 from io import BytesIO
 from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
+from flask_compress import Compress
 from flask_login import (
     LoginManager, login_user, current_user, logout_user, login_required
 )
@@ -24,7 +25,11 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
+# Initialize the Compress extension
+Compress(app)
 
+# Optional: Set the compression level (default: 6)
+app.config['COMPRESS_LEVEL'] = 6
 db.init_app(app)
 migrate = Migrate(app, db)
 
