@@ -184,9 +184,9 @@ def search():
             cast(Item.size_in_mm, String).ilike(f"%{search_term}%"),  # Cast numeric field to string for ILIKE
             cast(Item.weight_in_g, String).ilike(f"%{search_term}%")  # Cast numeric field to string for ILIKE
         )
-
+        
         # Include photo in the selected fields
-        pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail, Item.photo).filter(Item.name.ilike(f"%{search_term}%")).paginate(page, 20, False)
+        pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail, Item.photo).filter(search_criteria).paginate(page, 20, False)
     else:
         pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail, Item.photo).paginate(page, 20, False)
 
