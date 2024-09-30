@@ -185,13 +185,13 @@ def search():
             cast(Item.weight_in_g, String).ilike(f"%{search_term}%")  # Cast numeric field to string for ILIKE
         )
 
-        # Perform search with search criteria
-        pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail).filter(search_criteria).paginate(page, 20, False)
+        # Include photo in the selected fields
+        pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail, Item.photo).filter(Item.name.ilike(f"%{search_term}%")).paginate(page, 20, False)
     else:
-        # Display all items if no search term is provided
-        pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail).paginate(page, 20, False)
+        pagination = db.session.query(Item.id, Item.article_number, Item.name, Item.size_in_mm, Item.weight_in_g, Item.thumbnail, Item.photo).paginate(page, 20, False)
 
     items = pagination.items
+    # Prepare base64-encoded images and send to the template
     items_with_base64_images = [
         {
             'id': item.id,
@@ -199,6 +199,7 @@ def search():
             'name': item.name,
             'size_in_mm': item.size_in_mm,
             'weight_in_g': item.weight_in_g,
+            'photo': base64.b64encode(item.photo).decode('utf-8') if item.photo else None,
             'thumbnail': base64.b64encode(item.thumbnail).decode('utf-8') if item.thumbnail else None
         }
         for item in items
@@ -211,6 +212,7 @@ def search():
         delete_form=delete_form,
         pagination=pagination
     )
+
 
 
 @app.route('/add', methods=['GET', 'POST'])
